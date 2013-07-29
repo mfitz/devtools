@@ -10,7 +10,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
@@ -38,14 +37,10 @@ public class HeaderToolTest {
     @Before
     public void setUpDirectories() throws IOException {
         
-        // check test data exists as expected
+        // ensure test data exists as expected
         File runtimeDirectory = new File( System.getProperty("user.dir") );
         File testDataRoot = new File(runtimeDirectory, "src/test/data/");
         assertTestDataDirValid(testDataRoot);
-        
-        HEADER_FILE = new File(testDataRoot, HEADER_FILENAME);
-        HEADER_CONTENT = readFileContent(HEADER_FILE);
-        assertTrue("Header file was empty", HEADER_CONTENT.length() > 0);
         
         // copy test data to a temp directory
         TMP_ROOT_DIRECTORY = 
@@ -61,6 +56,10 @@ public class HeaderToolTest {
         assertFileListsEqual(expectedTestDirContents(TMP_ROOT_DIRECTORY), 
                             tmpDirContents,
                             "Temp dir does not contain expected contents");
+    
+        HEADER_FILE = new File(testDataRoot, HEADER_FILENAME);
+        HEADER_CONTENT = fileContents(HEADER_FILE);
+        assertTrue("Header file was empty", HEADER_CONTENT.length() > 0);
     }
     
     @After
@@ -279,7 +278,7 @@ public class HeaderToolTest {
     ///////////////////////////////////////////////////////
     // helper methods
     ///////////////////////////////////////////////////////
-    private static void assertTestDataDirAvailable(File testDataRoot) {
+    private void assertTestDataDirAvailable(File testDataRoot) {
         
         String failMsg = 
             format("Test data directory at %s is not a readable directory", 
@@ -289,7 +288,7 @@ public class HeaderToolTest {
         assertTrue( failMsg, testDataRoot.canRead() );
     }
     
-    private static void assertTestDataDirValid(File testDataDir) {
+    private void assertTestDataDirValid(File testDataDir) {
         
         assertTestDataDirAvailable(testDataDir);
         Collection<File> testDirContents = 
@@ -302,7 +301,7 @@ public class HeaderToolTest {
                             "Did not report expected list of files");
     }
     
-    private static List<File> expectedTestDirContents(File testDataDir) {
+    private List<File> expectedTestDirContents(File testDataDir) {
         
         return aFileList()
                 .withFile(testDataDir, "")
@@ -338,7 +337,7 @@ public class HeaderToolTest {
                 .build();
     }
     
-    private static void assertFileListsEqual(Collection<File> first, 
+    private void assertFileListsEqual(Collection<File> first, 
                                         Collection<File> second,
                                         String assertFailMsg) {
         
@@ -355,35 +354,14 @@ public class HeaderToolTest {
             assertTrue( failMsg, first.contains(file) );
         }
     }
-
-    private static String readFileContent(File headerFile)
-    throws FileNotFoundException, IOException {
-        
-        String failMsg = 
-            format("No readble header file at %s", headerFile);
-        assertTrue( failMsg, headerFile.exists() );
-        assertTrue( failMsg, headerFile.canRead() );
-        
-        StringBuffer fileContent = new StringBuffer();
-        BufferedReader br = new BufferedReader( new FileReader(headerFile) );
-        String nextLine = br.readLine();
-        while (nextLine != null) {
-            fileContent.append(nextLine);
-            fileContent.append(NEWLINE);
-            nextLine = br.readLine();
-        }
-        br.close();
-        
-        return fileContent.toString();
-    }
     
-    private static void assertDirectoryEmpty(File dir) {
+    private void assertDirectoryEmpty(File dir) {
         
         String failMsg = dir + " is not empty";
         assertEquals(failMsg, dir.list().length, 0);
     }
 
-    private static String fileContents(File file) 
+    private String fileContents(File file) 
     throws IOException {
              
         StringBuffer contentBuffer = new StringBuffer();
