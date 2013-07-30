@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Reports on files in a given directory that do not contain
  * a specified header. Lists files recursively, with optional
@@ -54,28 +57,12 @@ public class HeaderTool {
     public enum MatchMode { FULL_MATCH, FIRST_LINE_ONLY };
     
     private static final String NEWLINE = System.getProperty("line.separator"); 
+    private static final transient Logger LOG = 
+            LoggerFactory.getLogger(HeaderTool.class); 
     
+    private final File headerFile;
     private final String header;
     private final MatchMode matchMode;
-    
-//private static void setOptions() {
-//        
-//        verbose = Boolean.getBoolean("verbose-mode");
-//        if (verbose) {
-//            System.out.println("Using verbose mode");
-//        }
-//        
-//        matchOnFirstLineOnly = 
-//                Boolean.getBoolean("match-header-first-line-only");
-//        if (matchOnFirstLineOnly) {
-//            System.out.println("Matching against first line only");
-//        }
-//        
-//        insertHeader = Boolean.getBoolean("insert-header");
-//        if (insertHeader) {
-//            System.out.println("In insert header mode");
-//        }
-//    }
     
     /**
      * Constructs a new instance of <code> HeaderTool</code>.
@@ -90,6 +77,7 @@ public class HeaderTool {
     public HeaderTool(File headerFile, MatchMode mode) 
     throws IOException {
         
+        this.headerFile = headerFile;
         this.header = fileContents(headerFile);
         this.matchMode = mode;
     }
@@ -115,19 +103,30 @@ public class HeaderTool {
                                             String[] fileExtensions)
     throws IOException {
         
+        LOG.debug("Searching {} for files of type {} lacking header from {}", 
+                    new Object[] {
+                        rootDir, 
+                        fileExtensions, 
+                        headerFile});
+        
         List<File> filesWithNoHeader = new ArrayList<File>();
         String toMatch = header;
         if (matchMode == MatchMode.FIRST_LINE_ONLY) {
             String firstLineOfHeader = header.split(NEWLINE)[0];
+            LOG.debug("Matching only against first line of header: '{}'", 
+                        firstLineOfHeader);
             toMatch = firstLineOfHeader;
         }
         
         Collection<File> filesInDir = listFiles(rootDir, fileExtensions, true);
         for (File file : filesInDir) {
             if (fileContents(file).startsWith(toMatch) == false) {
+                LOG.debug("{} does not start with the header", file);
                 filesWithNoHeader.add(file);
             }
         }
+        LOG.info("Found {} files that lack the header", 
+                    filesWithNoHeader.size());
         
         return filesWithNoHeader;
     }
@@ -141,8 +140,12 @@ public class HeaderTool {
      * @throws IOException If something goes wrong reading 
      *          from or writing to any of the files
      */
-    public void insertHeader(List<File> files) 
+    public void insertHeader(Collection<File> files) 
     throws IOException {
+        
+        LOG.info("Inserting header from {} into {} files", 
+                    headerFile, 
+                    files.size() );
         
         for (File file : files) {
             String originalFileContent = fileContents(file);
@@ -150,12 +153,14 @@ public class HeaderTool {
             writer.write(header);
             writer.write(originalFileContent);
             writer.close();
+            LOG.info("Added header to {}", file);
         }
     }
     
     private String fileContents(File file) 
     throws IOException {
              
+        LOG.debug("Reading contents of {}", file);
         StringBuffer contentBuffer = new StringBuffer();
         FileReader fileReader = new FileReader(file);
         BufferedReader bufReader = new BufferedReader(fileReader);
@@ -171,11 +176,43 @@ public class HeaderTool {
     }
     
     /**
-     * @param args
+     * Runs the Header Tool. Supports optional system properties to
+     * control the matching behaviour (default is full - see class
+     * comments) and what to do with files that do not include the 
+     * header (default is simply to report on them):
+     * 
+     *      -Dinsert-mode=true
+     *      -Dfirst-line-match=true
+     * 
+     * @param args Runtime arguments, which must include:
+     *        <ol>
+     *          <li>Full path to source directory</li>
+     *          <li>Full path to header file</li>
+     *          <li>Variable number of file extensions to check (space separated). 
+     *              Passing only the * character provides wildcard extension 
+     *              matching
+     *          </li>
+     *        </ol>
+     * @throws IOException 
+     *        
      */
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
+    public static void main(String[] args) throws IOException {
+        
+        File rootDir = new File(args[0]);
+        File headerFile = new File(args[1]);
+        String[] fileExtensions = new String[args.length - 2];
+        System.arraycopy(args, 2, fileExtensions, 0, fileExtensions.length);
+        MatchMode matchMode = MatchMode.FULL_MATCH;
+        if (Boolean.getBoolean("first-line-match") == true) {
+            matchMode = MatchMode.FIRST_LINE_ONLY;
+        }
+        
+        HeaderTool headerTool = new HeaderTool(headerFile, matchMode);
+        Collection<File> filesWithNoHeader = 
+            headerTool.listFilesWithoutHeader(rootDir, fileExtensions);
+        if (Boolean.getBoolean("insert-mode") ==  true) {
+            headerTool.insertHeader(filesWithNoHeader);
+        }
     }
 
 }

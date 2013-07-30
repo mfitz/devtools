@@ -27,7 +27,7 @@
 		</fileSet>
 
 		<fileSet>
-			<directory>${project.basedir}/src/main/java</directory>
+			<directory>${project.basedir}</directory>
 			<outputDirectory>lib</outputDirectory>
 			<fileMode>0644</fileMode>
 			<includes>

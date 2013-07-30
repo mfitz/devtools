@@ -31,7 +31,7 @@ Running Header Tool
 
 Having built a distro and then unpacked the subsequent zip file, from the root of the unpacked distro, on *nix, type:
 
-    java -classpath lib:lib/* com.michaelfitzmaurice.devtools.HeaderTool <root of source directory> <location of header file> <file extensions>
+    java -classpath lib:lib/* [optional system properties] com.michaelfitzmaurice.devtools.HeaderTool <root of source directory> <location of header file> <file extensions>
     
 Note that on Windows, classpath elements are separated with a semi-colon, rather than a colon. The locations of both the source directory and the header file should be full paths, and the list of file extensions is space separated and should not include the dot character, i.e. `java cpp`, rather than `.java .cpp`. Do not surround the list with quote marks. The list of file extensions must include at least one value, but you can use the `*` character here to remove file extension filtering completely and match against any file.
 
@@ -40,6 +40,6 @@ By default, `HeaderTool` attempts to match against the full header, rather than 
     -Dinsert-mode=true
     -Dfirst-line-match=true
     
-There is a `header-tool.sh` shell script provided for convenience; you will need to pass this script the same runtime arguments described above.
+There is a `header-tool.sh` shell script provided for convenience; you will need to pass this script the same runtime arguments described above. Unfortunately you can't pass system properties to it in the same way, so only use this script if you want to accept the defaults for match mode and insert/report behaviour.
     
 
