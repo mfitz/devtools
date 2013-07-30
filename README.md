@@ -40,6 +40,6 @@ By default, `HeaderTool` attempts to match against the full header, rather than 
     -Dinsert-mode=true
     -Dfirst-line-match=true
     
-There is a `header-tool.sh` shell script provided for convenience; you will need to pass this script the same runtime arguments described above. Unfortunately you can't pass system properties to it in the same way, so only use this script if you want to accept the defaults for match mode and insert/report behaviour.
+There is a `header-tool.sh` shell script provided for convenience; you will need to pass this script the same runtime arguments described above. Unfortunately you can't pass system properties to it in the same way, so use this script only if you want to accept the defaults for match mode and insert/report behaviour.
     
 

@@ -15,6 +15,7 @@
  */
 package com.michaelfitzmaurice.devtools;
 
+import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.listFiles;
 
 import java.io.BufferedReader;
@@ -55,6 +56,10 @@ public class HeaderTool {
      * Determines how the match against the header will be carried out
      */
     public enum MatchMode { FULL_MATCH, FIRST_LINE_ONLY };
+    
+    public static final String INSERT_MODE_SYS_PROP = "insert-mode";
+    public static final String FIRST_LINE_MATCH_SYS_PROP = "first-line-match";
+    public static final String WILDCARD_FILE_EXTENSION = "*";
     
     private static final String NEWLINE = System.getProperty("line.separator"); 
     private static final transient Logger LOG = 
@@ -202,15 +207,18 @@ public class HeaderTool {
         File headerFile = new File(args[1]);
         String[] fileExtensions = new String[args.length - 2];
         System.arraycopy(args, 2, fileExtensions, 0, fileExtensions.length);
+        if ( asList(fileExtensions).contains(WILDCARD_FILE_EXTENSION) ) {
+            fileExtensions = null;
+        }
         MatchMode matchMode = MatchMode.FULL_MATCH;
-        if (Boolean.getBoolean("first-line-match") == true) {
+        if (Boolean.getBoolean(FIRST_LINE_MATCH_SYS_PROP) == true) {
             matchMode = MatchMode.FIRST_LINE_ONLY;
         }
         
         HeaderTool headerTool = new HeaderTool(headerFile, matchMode);
         Collection<File> filesWithNoHeader = 
             headerTool.listFilesWithoutHeader(rootDir, fileExtensions);
-        if (Boolean.getBoolean("insert-mode") ==  true) {
+        if (Boolean.getBoolean(INSERT_MODE_SYS_PROP) ==  true) {
             headerTool.insertHeader(filesWithNoHeader);
         }
     }
