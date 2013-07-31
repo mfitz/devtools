@@ -176,6 +176,8 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
                     .withFile(sourceDir, "subA2/different-header.txt")
                     .build();
         assertFilesLackHeader(filesWithDifferentHeader);
+        Map<String, FileSizeAndDate> originalFileSizesAndDates = 
+                fileSizesAndDates(filesWithDifferentHeader);
         
         switchOnInsertMode();
         switchOnFirstLineMatching();
@@ -187,6 +189,9 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
         }
         
         assertFilesLackHeader(filesWithDifferentHeader);
+        Map<String, FileSizeAndDate> newFileSizesAndDates = 
+                fileSizesAndDates(filesWithDifferentHeader);
+        assertFilesUnchanged(originalFileSizesAndDates, newFileSizesAndDates);
     }
 
     ///////////////////////////////////////////////////////
