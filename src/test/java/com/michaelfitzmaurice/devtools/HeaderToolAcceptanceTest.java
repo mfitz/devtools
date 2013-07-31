@@ -98,6 +98,8 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
         } finally {
             switchOffInsertMode();
         }
+        
+        assertFilesHaveHeader(files);
     }
 
     @Test
