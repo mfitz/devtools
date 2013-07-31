@@ -30,15 +30,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * Launches HeaderTool as an application using different combinations 
+ * of runtime arguments and system properties, then makes assertions 
+ * about its behaviour. Does not touch any of the method-level API of 
+ * HeaderTool, other than to call the <code>main()</code> method, thus 
+ * replicating running the app from the command line.
+ * 
+ * @author Michael Fitzmaurice
+ */
 public class HeaderToolAcceptanceTest extends HeaderToolTest {
+    
+    private File sourceDir;
+    private String[] fileExtensions;
+    
+    @Before
+    public void setup() {
+        sourceDir = new File(TMP_ROOT_DIRECTORY, "root/subA");
+        fileExtensions = new String[] {WILDCARD_FILE_EXTENSION};
+    }
     
     @Test
     public void doesNotInsertHeaderByDefault()
     throws IOException {
         
-        File sourceDir = new File(TMP_ROOT_DIRECTORY, "root/subA");
         List<File> headerlessFiles  = 
                 aFileList()
                     .withFile(sourceDir, "subA1/NoHeader.java")
@@ -52,17 +70,15 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
                     .build();
         assertFilesLackHeader(headerlessFiles);
         
-        assertFalse( Boolean.getBoolean(INSERT_MODE_SYS_PROP) );
-        HeaderTool.main( 
-            runtimeArgs(sourceDir, new String[] {WILDCARD_FILE_EXTENSION}) );
+        assertFalse( isInsertModeOn() );
+        runHeaderTool();
         assertFilesLackHeader(headerlessFiles);
     }
-    
+
     @Test
-    public void insertsHeaderIntoAllHeaderlessFilesForWildcardFileExtensionWhenInsertModeSet() 
+    public void insertModeInsertsHeaderIntoAllHeaderlessFilesForWildcardFileExtension() 
     throws IOException {
      
-        File sourceDir = new File(TMP_ROOT_DIRECTORY, "root/subA");
         List<File> files  = 
             aFileList()
                 .withFile(sourceDir, "subA1/NoHeader.java")
@@ -76,22 +92,18 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
                 .build();
         assertFilesLackHeader(files);
         
-        System.setProperty(INSERT_MODE_SYS_PROP, "true");
+        switchOnInsertMode();
         try {
-            HeaderTool.main(
-                runtimeArgs(sourceDir, 
-                            new String[] {WILDCARD_FILE_EXTENSION}) );
-            assertFilesHaveHeader(files);
+            runHeaderTool();
         } finally {
-            System.clearProperty(INSERT_MODE_SYS_PROP);
+            switchOffInsertMode();
         }
     }
-    
+
     @Test
-    public void doesNotModifyFilesThatContainHeaderWhenInsertModeSet()
+    public void insertModeDoesNotModifyFilesThatContainHeader()
     throws IOException {
         
-        File sourceDir = new File(TMP_ROOT_DIRECTORY, "root/subA");
         List<File> filesWithHeader  = 
             aFileList()
                 .withFile(sourceDir, "subA1/Header.java")
@@ -103,26 +115,24 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
         Map<String, FileSizeAndDate> originalFileSizesAndDates = 
             fileSizesAndDates(filesWithHeader);
         
-        System.setProperty(INSERT_MODE_SYS_PROP, "true");
+        switchOnInsertMode();
         try {
-            HeaderTool.main(
-                runtimeArgs(sourceDir, 
-                            new String[] {WILDCARD_FILE_EXTENSION}) );
-            assertFilesHaveHeader(filesWithHeader);
+            runHeaderTool();
         } finally {
-            System.clearProperty(INSERT_MODE_SYS_PROP);
+            switchOffInsertMode();
         }
         
+        assertFilesHaveHeader(filesWithHeader);
         Map<String, FileSizeAndDate> newFileSizesAndDates = 
             fileSizesAndDates(filesWithHeader);
         assertFilesUnchanged(originalFileSizesAndDates, newFileSizesAndDates);
     }
     
     @Test
-    public void insertsHeaderIntoOnlyRelevantHeaderlessFilesForSuppliedFileExtensionsWhenInsertModeSet() 
+    public void insertModeOnlyInsertsHeaderIntoHeaderlessFilesMatchingSuppliedFileExtensions() 
     throws IOException {
      
-        File sourceDir = new File(TMP_ROOT_DIRECTORY, "root/subA");
+        fileExtensions = new String[] {"java"};
         List<File> filesThatShouldChange  = 
             aFileList()
                 .withFile(sourceDir, "subA1/NoHeader.java")
@@ -132,14 +142,6 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
                 .build();
         assertFilesLackHeader(filesThatShouldChange);
         
-        System.setProperty(INSERT_MODE_SYS_PROP, "true");
-        try {
-            HeaderTool.main( runtimeArgs(sourceDir, new String[] {"java"}) );
-            assertFilesHaveHeader(filesThatShouldChange);
-        } finally {
-            System.clearProperty(INSERT_MODE_SYS_PROP);
-        }
-        
         List<File> filesThatShouldNotChange  = 
                 aFileList()
                     .withFile(sourceDir, "subA1/no-header.txt")
@@ -147,48 +149,74 @@ public class HeaderToolAcceptanceTest extends HeaderToolTest {
                     .withFile(sourceDir, "subA2/no-header.txt")
                     .withFile(sourceDir, "subA2/different-header.txt")
                     .build();
+        assertFilesLackHeader(filesThatShouldNotChange);
+        
+        switchOnInsertMode();
+        try {
+            runHeaderTool();
+        } finally {
+            switchOffInsertMode();
+        }
+        
+        assertFilesHaveHeader(filesThatShouldChange);
         assertFilesLackHeader(filesThatShouldNotChange);
     }
     
     @Test
-    public void doesNotInsertHeaderIntoFilesWithDifferentHeaderIfFirstLineMatchesWhenInsertModeAndFirstLineModeBothSet()
+    public void insertModeDoesNotInsertHeaderIntoFilesWithDifferentHeaderIfFirstLineMatchesInFirstLineMode()
     throws IOException {
         
-        File sourceDir = new File(TMP_ROOT_DIRECTORY, "root/subA");
-        List<File> filesThatShouldChange  = 
-            aFileList()
-                .withFile(sourceDir, "subA1/NoHeader.java")
-                .withFile(sourceDir, "subA2/NoHeader.java")
-                .build();
-        assertFilesLackHeader(filesThatShouldChange);
-        
-        System.setProperty(INSERT_MODE_SYS_PROP, "true");
-        System.setProperty(FIRST_LINE_MATCH_SYS_PROP, "true");
-        try {
-            HeaderTool.main( runtimeArgs(sourceDir, new String[] {"java"}) );
-            assertFilesHaveHeader(filesThatShouldChange);
-        } finally {
-            System.clearProperty(INSERT_MODE_SYS_PROP);
-            System.clearProperty(FIRST_LINE_MATCH_SYS_PROP);
-        }
-        
-        List<File> filesThatShouldNotChange  = 
+        List<File> filesWithDifferentHeader  = 
                 aFileList()
                     .withFile(sourceDir, "subA1/DifferentHeader.java")
-                    .withFile(sourceDir, "subA1/no-header.txt")
                     .withFile(sourceDir, "subA1/different-header.txt")
                     .withFile(sourceDir, "subA2/DifferentHeader.java")
-                    .withFile(sourceDir, "subA2/no-header.txt")
                     .withFile(sourceDir, "subA2/different-header.txt")
                     .build();
-        assertFilesLackHeader(filesThatShouldNotChange);
+        assertFilesLackHeader(filesWithDifferentHeader);
+        
+        switchOnInsertMode();
+        switchOnFirstLineMatching();
+        try {
+            runHeaderTool();
+        } finally {
+            switchOffInsertMode();
+            switchOffFirstLineMatching();
+        }
+        
+        assertFilesLackHeader(filesWithDifferentHeader);
     }
-    
+
     ///////////////////////////////////////////////////////
     // helper methods
     ///////////////////////////////////////////////////////
     
-    private String[] runtimeArgs(File sourceDir, String[] fileExtensions) {
+    private static void switchOffInsertMode() {
+        System.clearProperty(INSERT_MODE_SYS_PROP);
+    }
+
+    private static void switchOnInsertMode() {
+        System.setProperty(INSERT_MODE_SYS_PROP, "true");
+    }
+    
+    private static boolean isInsertModeOn() {
+        return Boolean.getBoolean(INSERT_MODE_SYS_PROP);
+    }
+    
+    private static void switchOffFirstLineMatching() {
+        System.clearProperty(FIRST_LINE_MATCH_SYS_PROP);
+    }
+
+    private static void switchOnFirstLineMatching() {
+        System.setProperty(FIRST_LINE_MATCH_SYS_PROP, "true");
+    }
+    
+    private void runHeaderTool() 
+    throws IOException {
+        HeaderTool.main( runtimeArgs() );
+    }
+    
+    private String[] runtimeArgs() {
         
         String[] args = new String[2 + fileExtensions.length];
         args[0] = sourceDir.getAbsolutePath();

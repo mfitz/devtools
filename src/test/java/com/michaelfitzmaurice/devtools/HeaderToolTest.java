@@ -33,6 +33,12 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.junit.After;
 import org.junit.Before;
 
+/**
+ * Base class defining functionality that is common to both
+ * unit and acceptance tests for HeaderTool.
+ * 
+ * @author Michael Fitzmaurice
+ */
 public class HeaderToolTest {
     
     protected static final String NEWLINE = 
