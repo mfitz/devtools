@@ -186,8 +186,10 @@ public class HeaderTool {
      * comments) and what to do with files that do not include the 
      * header (default is simply to report on them):
      * 
+     * <pre>
      *      -Dinsert-mode=true
      *      -Dfirst-line-match=true
+     * </pre>
      * 
      * @param args Runtime arguments, which must include:
      *        <ol>
@@ -198,8 +200,8 @@ public class HeaderTool {
      *              matching
      *          </li>
      *        </ol>
-     * @throws IOException 
      *        
+     * @throws IOException 
      */
     public static void main(String[] args) throws IOException {
         
@@ -218,7 +220,7 @@ public class HeaderTool {
         HeaderTool headerTool = new HeaderTool(headerFile, matchMode);
         Collection<File> filesWithNoHeader = 
             headerTool.listFilesWithoutHeader(rootDir, fileExtensions);
-        if (Boolean.getBoolean(INSERT_MODE_SYS_PROP) ==  true) {
+        if (Boolean.getBoolean(INSERT_MODE_SYS_PROP) == true) {
             headerTool.insertHeader(filesWithNoHeader);
         }
     }
