@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * filtering based on file extension. Can also be run in
  * insert mode, whereby it will insert the header at the 
  * beginning of any file that lacks it. 
- * 
+ * <p>
  * Also includes the option to match only against the first 
  * line of the header, which I included because the licence 
  * headers I use in personal open source projects typically 
@@ -192,14 +192,14 @@ public class HeaderTool {
      * </pre>
      * 
      * @param args Runtime arguments, which must include:
-     *        <ol>
-     *          <li>Full path to source directory</li>
-     *          <li>Full path to header file</li>
-     *          <li>Variable number of file extensions to check (space separated). 
-     *              Passing only the * character provides wildcard extension 
-     *              matching
-     *          </li>
-     *        </ol>
+     *   <ol>
+     *     <li>Full path to source directory</li>
+     *     <li>Full path to header file</li>
+     *     <li>Variable number of file extensions to check (space separated). 
+     *         Passing only the * character provides wildcard extension 
+     *         matching
+     *      </li>
+     *    </ol>
      *        
      * @throws IOException 
      */
